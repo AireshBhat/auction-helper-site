@@ -24,7 +24,7 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "polygon";
+const defaultNetwork = "base-goerli";
 
 function mnemonic() {
   try {
@@ -227,6 +227,20 @@ module.exports = {
     moonriver: {
       url: "https://rpc.api.moonriver.moonbeam.network",
       chainId: 1285,
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    "base-mainnet": {
+      chainId: 8453,
+      url: "https://mainnet.base.org",
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
+    "base-goerli": {
+      chainId: 84531,
+      url: "https://goerli.base.org",
       accounts: {
         mnemonic: mnemonic(),
       },

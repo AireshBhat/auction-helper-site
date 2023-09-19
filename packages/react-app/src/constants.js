@@ -246,6 +246,22 @@ export const NETWORKS = {
     blockExplorer: "https://moonbeam-explorer.netlify.app/",
     rpcUrl: "http://127.0.0.1:9933",
   },
+  baseMainnet: {
+    name: "baseMainnet",
+    color: "#07297c",
+    chainId: 8453,
+    rpcUrl: "https://mainnet.base.org",
+    blockExplorer: "https://mainnet.basescan.org/",
+    easyAuctionAddress: "0xcAe780DdD607C2081fbB4654E719f77F5e8907BF",
+  },
+  baseGoerli: {
+    name: "baseGoerli",
+    color: "#07297c",
+    chainId: 84531,
+    blockExplorer: "https://goerli.basescan.org/",
+    rpcUrl: "https://goerli.base.org",
+    easyAuctionAddress: "0x231F3Fd7c3E3C9a2c8A03B72132c31241DF0a26C",
+  },
 };
 
 export const NETWORK = chainId => {
@@ -256,4 +272,4 @@ export const NETWORK = chainId => {
   }
 };
 
-export const initialNetwork = NETWORKS.polygon; // <------- select your target frontend network (localhost, goerli, xdai, mainnet)
+export const initialNetwork = NETWORKS.baseGoerli; // <------- select your target frontend network (localhost, goerli, xdai, mainnet)

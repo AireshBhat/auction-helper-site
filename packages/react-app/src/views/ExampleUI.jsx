@@ -1,5 +1,5 @@
 import { Button, DatePicker, Divider, Input, Switch, Form, InputNumber, Select } from "antd";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { utils, BigNumber, constants } from "ethers";
 import { notification } from "antd";
 
@@ -20,7 +20,10 @@ export default function ExampleUI({
 }) {
   const [auctioningTokenAmount, setAuctioningTokenAmount] = useState(0);
   const [biddingTokenAmount, setBiddingTokenAmount] = useState(0);
+  const [biddingTokenUSDCAmount, setBiddingTokenUSDCAmount] = useState(0);
   const [isPrivateAuction, setIsPrivateAuction] = useState(false);
+
+  const formRef = useRef(null);
 
   const onFinish = useCallback(
     async values => {
@@ -45,13 +48,11 @@ export default function ExampleUI({
       const orderCancellationEndDateTimestamp = orderCancellationEndDate.unix();
       const auctionEndDateTimestamp = auctionEndDate.unix();
       const auctionedSellAmountInWei = BigNumber.from(utils.parseUnits("" + auctionedSellAmount, 18)).toString();
-      const minBuyAmountInWei = BigNumber.from(utils.parseUnits("" + minBuyAmount, 18)).toString();
+      const minBuyAmountInWei = BigNumber.from(utils.parseUnits("" + minBuyAmount, 6)).toString();
       const minimumBiddingAmountPerOrderInWei = BigNumber.from(
-        utils.parseUnits("" + minimumBiddingAmountPerOrder, 18),
+        utils.parseUnits("" + minimumBiddingAmountPerOrder, 6),
       ).toString();
-      const minimumFundingThresholdInWei = BigNumber.from(
-        utils.parseUnits("" + minimumFundingThreshold, 18),
-      ).toString();
+      const minimumFundingThresholdInWei = BigNumber.from(utils.parseUnits("" + minimumFundingThreshold, 6)).toString();
       const isAtomicClosureAllowedBool = !!isAtomicClosureAllowed;
       let accessManagerAddress = constants.AddressZero;
       let accessManagerContractData = "0x";
@@ -186,6 +187,57 @@ export default function ExampleUI({
     console.log(await result);
   }, [auctioningTokenAmount, address, writeContracts.AuctioningToken]);
 
+  const approveBiddingTokenUSDC = useCallback(async () => {
+    if (biddingTokenUSDCAmount <= 0) {
+      alert("Please enter a valid amount");
+      return;
+    }
+    /* look how you call setPurpose on your contract: */
+    /* notice how you pass a call back for tx updates too */
+    const result = tx(
+      writeContracts.BiddingTokenUSDC.mint(address, BigNumber.from(utils.parseUnits("" + biddingTokenUSDCAmount, 6))),
+      update => {
+        console.log("📡 Transaction Update:", update);
+        if (update && (update.status === "confirmed" || update.status === 1)) {
+          console.log(" 🍾 Transaction " + update.hash + " finished!");
+          console.log(
+            " ⛽️ " +
+              update.gasUsed +
+              "/" +
+              (update.gasLimit || update.gas) +
+              " @ " +
+              parseFloat(update.gasPrice) / 1000000000 +
+              " gwei",
+          );
+
+          tx(
+            writeContracts.BiddingTokenUSDC.approve(
+              initialNetwork.easyAuctionAddress,
+              BigNumber.from(utils.parseUnits("" + biddingTokenUSDCAmount, 6)),
+            ),
+            update => {
+              console.log("📡 Transaction Update:", update);
+              if (update && (update.status === "confirmed" || update.status === 1)) {
+                console.log(" 🍾 Transaction " + update.hash + " finished!");
+                console.log(
+                  " ⛽️ " +
+                    update.gasUsed +
+                    "/" +
+                    (update.gasLimit || update.gas) +
+                    " @ " +
+                    parseFloat(update.gasPrice) / 1000000000 +
+                    " gwei",
+                );
+              }
+            },
+          );
+        }
+      },
+    );
+    console.log("awaiting metamask/web3 confirm result...", result);
+    console.log(await result);
+  }, []);
+
   const approveBiddingToken = useCallback(async () => {
     if (biddingTokenAmount <= 0) {
       alert("Please enter a valid amount");
@@ -240,7 +292,7 @@ export default function ExampleUI({
   const onSettleAuction = useCallback(
     async values => {
       const { auctionId } = values;
-      const result = await tx(writeContracts.EasyAuction.settleAuction(auctionId), update => {
+      await tx(writeContracts.EasyAuction.settleAuction(auctionId), update => {
         console.log("📡 Transaction Update:", update);
         if (update && (update.status === "confirmed" || update.status === 1)) {
           console.log(" 🍾 Transaction " + update.hash + " finished!");
@@ -307,11 +359,35 @@ export default function ExampleUI({
           </Button>
           <Address address={writeContracts?.BiddingToken?.address} />
         </div>
+        {writeContracts?.BiddingTokenUSDC && (
+          <div
+            style={{
+              display: "flex",
+              alignContent: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              marginTop: 20,
+            }}
+          >
+            <InputNumber
+              min={1}
+              onChange={e => {
+                setBiddingTokenUSDCAmount(e);
+              }}
+              style={{ width: 200, marginRight: 20 }}
+            />
+            <Button style={{ marginTop: 8, marginRight: 10 }} onClick={approveBiddingTokenUSDC}>
+              Mint Bidding Token(USDC) and Approve
+            </Button>
+            <Address address={writeContracts?.BiddingTokenUSDC?.address} />
+          </div>
+        )}
         <Divider />
         <div style={{ margin: 8 }}>
           <h3>Initiate Auction</h3>
           <Form
             name="Initiate Auction Form"
+            ref={formRef}
             labelAlign="right"
             layout="inline"
             labelCol={{ span: 8 }}

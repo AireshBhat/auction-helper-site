@@ -362,6 +362,15 @@ function App(props) {
             blockExplorer={blockExplorer}
             contractConfig={contractConfig}
           />
+          <Contract
+            name="BiddingTokenUSDC"
+            price={price}
+            signer={userSigner}
+            provider={localProvider}
+            address={address}
+            blockExplorer={blockExplorer}
+            contractConfig={contractConfig}
+          />
         </Route>
         <Route path="/hints">
           <Hints
